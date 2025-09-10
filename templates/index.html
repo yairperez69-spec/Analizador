@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analizador Léxico</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            transition: background-color 0.3s ease;
+            min-height: 100vh;
+        }
+        
+        .bg-blue {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+            color: white;
+        }
+        
+        .bg-white {
+            background: #f8f9fa !important;
+            color: #333;
+        }
+        
+        .container-main {
+            padding: 2rem 0;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+        
+        .card-header {
+            background: linear-gradient(45deg, #28a745, #20c997);
+            color: white;
+            border-radius: 15px 15px 0 0 !important;
+            border: none;
+            padding: 1rem 1.5rem;
+        }
+        
+        .btn-theme {
+            border-radius: 25px;
+            padding: 10px 25px;
+            font-weight: 600;
+            margin: 0 5px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-theme:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .table {
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 0;
+        }
+        
+        .table thead th {
+            border: none;
+            background: linear-gradient(45deg, #495057, #6c757d);
+            color: white;
+            font-weight: 600;
+            text-align: center;
+            vertical-align: middle;
+            padding: 15px 8px;
+            font-size: 0.9rem;
+        }
+        
+        .table tbody td {
+            text-align: center;
+            vertical-align: middle;
+            padding: 12px 8px;
+        }
+        
+        .table tbody td:nth-child(2) {
+            text-align: left;
+        }
+        
+        .token-success {
+            background-color: #d4edda !important;
+            color: #155724;
+        }
+        
+        .token-info {
+            background-color: #d1ecf1 !important;
+            color: #0c5460;
+        }
+        
+        .token-warning {
+            background-color: #fff3cd !important;
+            color: #856404;
+        }
+        
+        .token-primary {
+            background-color: #cce7ff !important;
+            color: #004085;
+        }
+        
+        .token-danger {
+            background-color: #f8d7da !important;
+            color: #721c24;
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .stats-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .stats-badges .badge {
+            font-size: 0.9rem;
+            padding: 8px 12px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .header-title {
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .check-mark {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .check-success { color: #28a745; }
+        .check-warning { color: #ffc107; }
+        .check-primary { color: #007bff; }
+        .check-danger { color: #dc3545; }
+
+        .status-indicator {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .status-offline {
+            background-color: #ffeaa7;
+            color: #2d3436;
+        }
+
+        .status-online {
+            background-color: #00cec9;
+            color: white;
+        }
+    </style>
+</head>
+<body class="bg-white">
+    <div class="container container-main">
+        <div class="row justify-content-center">
+            <div class="col-lg-12">
+                <div class="text-center mb-4">
+                    <h1 class="display-4 fw-bold">
+                        <i class="fas fa-code text-primary"></i> Analizador Léxico
+                    </h1>
+                    <p class="lead">Escribe tu código y analiza tokens automáticamente</p>
+                    <div id="connectionStatus" class="status-indicator status-offline">
+                        <i class="fas fa-wifi"></i> Verificando servidor...
+                    </div>
+                </div>
+
+                <!-- Controles de tema -->
+                <div class="text-center mb-4">
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-primary btn-theme" onclick="cambiarTema('azul')">
+                            <i class="fas fa-palette"></i> Tema Azul
+                        </button>
+                        <button type="button" class="btn btn-light btn-theme" onclick="cambiarTema('blanco')">
+                            <i class="fas fa-sun"></i> Tema Claro
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Formulario de entrada -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-edit"></i> Ingresa tu código</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="formAnalizar">
+                            <div class="mb-3">
+                                <textarea 
+                                    class="form-control" 
+                                    id="textoAnalizar" 
+                                    rows="6" 
+                                    placeholder="Escribe aquí tu código para analizar..."
+                                    style="font-family: 'Courier New', monospace; font-size: 14px;"
+                                ></textarea>
+                            </div>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-success btn-lg">
+                                    <i class="fas fa-search"></i> Analizar Código
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>  
+
+                <!-- Resultados -->
+                <div id="resultados" class="card" style="display: none;">
+                    <div class="card-header">
+                        <div class="header-content">
+                            <h5 class="header-title">
+                                <i class="fas fa-table"></i> 
+                                Resultados del Análisis
+                            </h5>
+                            <div class="stats-badges">
+                                <span class="badge">
+                                    <i class="fas fa-list"></i>
+                                    <span id="totalTokensCount">0</span> Total
+                                </span>
+                                <span class="badge">
+                                    <i class="fas fa-key"></i>
+                                    <span id="palabrasReservadasCount">0</span> Reservadas
+                                </span>
+                                <span class="badge">
+                                    <i class="fas fa-hashtag"></i>
+                                    <span id="numerosCount">0</span> Números
+                                </span>
+                                <span class="badge">
+                                    <i class="fas fa-tag"></i>
+                                    <span id="identificadoresCount">0</span> Variables
+                                </span>
+                                <span class="badge">
+                                    <i class="fas fa-cog"></i>
+                                    <span id="simbolosCount">0</span> Símbolos
+                                </span>
+                            </div>
+                        </div> 
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover table-bordered mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Número</th>
+                                        <th>Token</th>
+                                        <th>Tipo</th>
+                                        <th>Estado</th>
+                                        <th>Palabra Reservada</th>
+                                        <th>Símbolo</th>
+                                        <th>Paréntesis Izq</th>
+                                        <th>Paréntesis Der</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tablaResultados">
+                                    <!-- Los resultados aparecerán aquí -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let serverConnected = false;
+
+        // Analizador local simple
+        class AnalizadorLexico {
+            constructor() {
+                this.palabrasReservadas = ['if', 'for', 'while'];
+                this.simbolos = {
+                    '(': 'PARENTESIS_IZQ',
+                    ')': 'PARENTESIS_DER',
+                    '{': 'LLAVE_IZQ',
+                    '}': 'LLAVE_DER',
+                    '<': 'MENOR_QUE',
+                    '>': 'MAYOR_QUE',
+                    '=': 'SIMBOLO',
+                    '+': 'SUMA',
+                    '-': 'RESTA',
+                    '*': 'MULTIPLICACION',
+                    '/': 'DIVISION',
+                    ';': 'PUNTO_COMA',
+                    ',': 'COMA'
+                };
+            }
+
+            analizar(texto) {
+                const tokens = [];
+                let i = 0;
+                
+                while (i < texto.length) {
+                    const char = texto[i];
+                    
+                    if (/\s/.test(char)) {
+                        i++;
+                        continue;
+                    }
+                    
+                    if (/\d/.test(char)) {
+                        let numero = '';
+                        while (i < texto.length && /\d/.test(texto[i])) {
+                            numero += texto[i];
+                            i++;
+                        }
+                        tokens.push({
+                            token: numero,
+                            tipo: 'NUMERO',
+                            color: 'primary'
+                        });
+                        continue;
+                    }
+                    
+                    if (/[a-zA-Z_]/.test(char)) {
+                        let palabra = '';
+                        while (i < texto.length && /[a-zA-Z_0-9]/.test(texto[i])) {
+                            palabra += texto[i];
+                            i++;
+                        }
+                        
+                        if (this.palabrasReservadas.includes(palabra)) {
+                            tokens.push({
+                                token: palabra,
+                                tipo: 'PALABRA_RESERVADA',
+                                color: 'success'
+                            });
+                        } else {
+                            tokens.push({
+                                token: palabra,
+                                tipo: 'IDENTIFICADOR',
+                                color: 'info'
+                            });
+                        }
+                        continue;
+                    }
+                    
+                    if (this.simbolos[char]) {
+                        tokens.push({
+                            token: char,
+                            tipo: this.simbolos[char],
+                            color: 'warning'
+                        });
+                        i++;
+                        continue;
+                    }
+                    
+                    tokens.push({
+                        token: char,
+                        tipo: 'DESCONOCIDO',
+                        color: 'danger'
+                    });
+                    i++;
+                }
+                
+                return tokens;
+            }
+        }
+
+        const analizador = new AnalizadorLexico();
+
+        function verificarConexion() {
+            fetch('/test')
+                .then(response => response.json())
+                .then(data => {
+                    serverConnected = true;
+                    document.getElementById('connectionStatus').innerHTML = '<i class="fas fa-check-circle"></i> Servidor conectado';
+                    document.getElementById('connectionStatus').className = 'status-indicator status-online';
+                })
+                .catch(error => {
+                    serverConnected = false;
+                    document.getElementById('connectionStatus').innerHTML = '<i class="fas fa-exclamation-triangle"></i> Modo local';
+                    document.getElementById('connectionStatus').className = 'status-indicator status-offline';
+                });
+        }
+
+        function cambiarTema(tema) {
+            const body = document.body;
+            if (tema === 'azul') {
+                body.className = 'bg-blue';
+            } else {
+                body.className = 'bg-white';
+            }
+        }
+
+        document.getElementById('formAnalizar').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const texto = document.getElementById('textoAnalizar').value.trim();
+            if (!texto) {
+                alert('Por favor, ingresa código para analizar.');
+                return;
+            }
+
+            const btnAnalizar = document.querySelector('button[type="submit"]');
+            btnAnalizar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analizando...';
+            btnAnalizar.disabled = true;
+
+            // Usar servidor Flask si está disponible, sino usar analizador local
+            fetch('/analizar', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ texto: texto })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    mostrarResultados(data);
+                } else {
+                    throw new Error('Error del servidor');
+                }
+            })
+            .catch(error => {
+                console.log('Usando analizador local');
+                const tokens = analizador.analizar(texto);
+                const dataLocal = convertirTokens(tokens);
+                mostrarResultados(dataLocal);
+            })
+            .finally(() => {
+                btnAnalizar.innerHTML = '<i class="fas fa-search"></i> Analizar Código';
+                btnAnalizar.disabled = false;
+            });
+        });
+
+        function convertirTokens(tokens) {
+            const stats = {
+                total: tokens.length,
+                palabrasReservadas: 0,
+                identificadores: 0,
+                numeros: 0,
+                simbolos: 0
+            };
+
+            const resultados = tokens.map((token, i) => {
+                const resultado = {
+                    ...token,
+                    posicion: i + 1,
+                    palabra_reservada: '',
+                    simbolo: '',
+                    parentesis_izq: '',
+                    parentesis_der: '',
+                    estado: ''
+                };
+
+                if (token.tipo === 'PALABRA_RESERVADA') {
+                    resultado.palabra_reservada = '✓';
+                    resultado.estado = 'Palabra Clave';
+                    stats.palabrasReservadas++;
+                } else if (token.tipo === 'IDENTIFICADOR') {
+                    resultado.estado = 'Variable';
+                    stats.identificadores++;
+                } else if (token.tipo === 'NUMERO') {
+                    resultado.estado = 'Número';
+                    stats.numeros++;
+                } else if (token.tipo === 'PARENTESIS_IZQ') {
+                    resultado.simbolo = '✓';
+                    resultado.parentesis_izq = '✓';
+                    resultado.estado = 'Paréntesis';
+                    stats.simbolos++;
+                } else if (token.tipo === 'PARENTESIS_DER') {
+                    resultado.simbolo = '✓';
+                    resultado.parentesis_der = '✓';
+                    resultado.estado = 'Paréntesis';
+                    stats.simbolos++;
+                } else {
+                    resultado.simbolo = '✓';
+                    resultado.estado = 'Símbolo';
+                    stats.simbolos++;
+                }
+
+                return resultado;
+            });
+
+            return {
+                resultados: resultados,
+                total_tokens: stats.total,
+                palabras_reservadas: stats.palabrasReservadas,
+                identificadores: stats.identificadores,
+                numeros: stats.numeros,
+                simbolos: stats.simbolos
+            };
+        }
+
+        function mostrarResultados(data) {
+            const resultadosDiv = document.getElementById('resultados');
+            const tablaBody = document.getElementById('tablaResultados');
+
+            // Actualizar contadores
+            document.getElementById('totalTokensCount').textContent = data.total_tokens || 0;
+            document.getElementById('palabrasReservadasCount').textContent = data.palabras_reservadas || 0;
+            document.getElementById('identificadoresCount').textContent = data.identificadores || 0;
+            document.getElementById('numerosCount').textContent = data.numeros || 0;
+            document.getElementById('simbolosCount').textContent = data.simbolos || 0;
+
+            // Limpiar tabla
+            tablaBody.innerHTML = '';
+
+            if (data.resultados && data.resultados.length > 0) {
+                data.resultados.forEach((resultado, index) => {
+                    const fila = document.createElement('tr');
+                    fila.className = `token-${resultado.color} fade-in`;
+                    
+                    let icono = '<i class="fas fa-cog text-secondary"></i>';
+                    if (resultado.tipo === 'PALABRA_RESERVADA') {
+                        icono = '<i class="fas fa-check-circle text-success"></i>';
+                    } else if (resultado.tipo === 'NUMERO') {
+                        icono = '<i class="fas fa-hashtag text-primary"></i>';
+                    } else if (resultado.tipo === 'IDENTIFICADOR') {
+                        icono = '<i class="fas fa-user-tag text-info"></i>';
+                    } else if (resultado.tipo.includes('PARENTESIS')) {
+                        icono = '<i class="fas fa-brackets-curly text-warning"></i>';
+                    } else {
+                        icono = '<i class="fas fa-cog text-warning"></i>';
+                    }
+                    
+                    fila.innerHTML = `
+                        <td><strong>${resultado.posicion || index + 1}</strong></td>
+                        <td><code>${resultado.token}</code></td>
+                        <td><span class="badge bg-${resultado.color}">${resultado.tipo}</span></td>
+                        <td>${icono}</td>
+                        <td><span class="check-mark check-success">${resultado.palabra_reservada || ''}</span></td>
+                        <td><span class="check-mark check-warning">${resultado.simbolo || ''}</span></td>
+                        <td><span class="check-mark check-primary">${resultado.parentesis_izq || ''}</span></td>
+                        <td><span class="check-mark check-danger">${resultado.parentesis_der || ''}</span></td>
+                    `;
+                    
+                    tablaBody.appendChild(fila);
+                });
+
+                resultadosDiv.style.display = 'block';
+            } else {
+                tablaBody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4">No se encontraron tokens</td></tr>';
+                resultadosDiv.style.display = 'block';
+            }
+        }
+
+        // Solo verificar conexión al cargar
+        window.addEventListener('load', verificarConexion);
+    </script>
+</body>
+</html>
