@@ -3,23 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analizador Léxico</title>
+    <title>Analizador Léxico y Sintáctico</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         body {
-            transition: background-color 0.3s ease;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-        }
-        
-        .bg-blue {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-            color: white;
-        }
-        
-        .bg-white {
-            background: #f8f9fa !important;
-            color: #333;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
         
         .container-main {
@@ -28,553 +19,832 @@
         
         .card {
             border: none;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border-radius: 20px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.95);
             margin-bottom: 2rem;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.15);
         }
         
         .card-header {
             background: linear-gradient(45deg, #28a745, #20c997);
             color: white;
-            border-radius: 15px 15px 0 0 !important;
             border: none;
-            padding: 1rem 1.5rem;
-        }
-        
-        .btn-theme {
-            border-radius: 25px;
-            padding: 10px 25px;
-            font-weight: 600;
-            margin: 0 5px;
-            transition: all 0.3s ease;
-        }
-        
-        .btn-theme:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-        }
-        
-        .table {
-            border-radius: 10px;
+            padding: 1.5rem;
+            position: relative;
             overflow: hidden;
-            margin-bottom: 0;
+        }
+
+        .card-header.syntax {
+            background: linear-gradient(45deg, #6f42c1, #e83e8c);
         }
         
-        .table thead th {
+        .title-section {
+            text-align: center;
+            margin-bottom: 3rem;
+            color: white;
+            position: relative;
+        }
+        
+        .title-section h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            text-shadow: 0 6px 12px rgba(0,0,0,0.4);
+            margin-bottom: 15px;
+            background: linear-gradient(45deg, #fff, #f8f9fa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .title-section p {
+            font-size: 1.3rem;
+            opacity: 0.95;
+            text-shadow: 0 3px 6px rgba(0,0,0,0.3);
+            font-weight: 300;
+        }
+        
+        .lexical-focus {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 3rem;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 25px;
+            border-radius: 25px;
+            backdrop-filter: blur(15px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+        
+        .lexical-badge {
+            padding: 18px 35px;
             border: none;
-            background: linear-gradient(45deg, #495057, #6c757d);
+            border-radius: 30px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            background: linear-gradient(45deg, #28a745, #20c997);
             color: white;
-            font-weight: 600;
-            text-align: center;
-            vertical-align: middle;
-            padding: 15px 8px;
-            font-size: 0.9rem;
+            box-shadow: 0 12px 35px rgba(40, 167, 69, 0.4);
         }
         
-        .table tbody td {
-            text-align: center;
-            vertical-align: middle;
-            padding: 12px 8px;
-        }
-        
-        .table tbody td:nth-child(2) {
-            text-align: left;
-        }
-        
-        .token-success {
-            background-color: #d4edda !important;
-            color: #155724;
-        }
-        
-        .token-info {
-            background-color: #d1ecf1 !important;
-            color: #0c5460;
-        }
-        
-        .token-warning {
-            background-color: #fff3cd !important;
-            color: #856404;
-        }
-        
-        .token-primary {
-            background-color: #cce7ff !important;
-            color: #004085;
-        }
-        
-        .token-danger {
-            background-color: #f8d7da !important;
-            color: #721c24;
-        }
-        
-        .fade-in {
-            animation: fadeIn 0.5s ease-in;
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .pulse {
-            animation: pulse 2s infinite;
-        }
-        
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
-        }
-
-        .stats-badges {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            align-items: center;
-        }
-
-        .stats-badges .badge {
-            font-size: 0.9rem;
-            padding: 8px 12px;
+        .code-textarea {
+            font-family: 'Fira Code', 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 15px;
+            border: 3px solid #e9ecef;
             border-radius: 20px;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            background: rgba(255, 255, 255, 0.2);
+            padding: 20px;
+            transition: all 0.4s ease;
+            min-height: 180px;
+            background: #f8f9fa;
+            resize: vertical;
+            line-height: 1.5;
+        }
+        
+        .code-textarea:focus {
+            border-color: #20c997;
+            box-shadow: 0 0 30px rgba(32, 201, 151, 0.4);
+            background: white;
+            outline: none;
+        }
+        
+        .analyze-btn {
+            border: none;
+            border-radius: 30px;
+            padding: 18px 50px;
+            font-size: 1.2rem;
+            font-weight: 700;
             color: white;
-            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            width: 100%;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
         }
 
-        .header-content {
+        .btn-lexico {
+            background: linear-gradient(45deg, #20c997, #28a745);
+        }
+
+        .btn-lexico:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(32, 201, 151, 0.5);
+            background: linear-gradient(45deg, #28a745, #20c997);
+        }
+
+        .btn-sintactico {
+            background: linear-gradient(45deg, #6f42c1, #e83e8c);
+        }
+
+        .btn-sintactico:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(111, 66, 193, 0.5);
+            background: linear-gradient(45deg, #e83e8c, #6f42c1);
+        }
+        
+        .analyze-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .results-section {
+            display: none;
+            animation: fadeInUp 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        .results-section.show {
+            display: block;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .stats-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            gap: 15px;
+            gap: 20px;
         }
-
-        .header-title {
-            margin: 0;
+        
+        .stats-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        
+        .stats-badge {
+            background: rgba(255, 255, 255, 0.25);
+            color: white;
+            padding: 10px 18px;
+            border-radius: 25px;
+            font-size: 0.95rem;
+            font-weight: 600;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
-
-        .check-mark {
-            font-size: 1.2rem;
-            font-weight: bold;
+        
+        .table {
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
         }
-
-        .check-success { color: #28a745; }
-        .check-warning { color: #ffc107; }
-        .check-primary { color: #007bff; }
-        .check-danger { color: #dc3545; }
-
-        .status-indicator {
-            display: inline-block;
-            padding: 4px 8px;
-            border-radius: 12px;
-            font-size: 0.8rem;
+        
+        .table thead th {
+            background: linear-gradient(45deg, #495057, #6c757d);
+            color: white;
+            border: none;
+            padding: 18px 12px;
+            font-weight: 700;
+            text-align: center;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .table tbody td {
+            padding: 15px 12px;
+            text-align: center;
+            vertical-align: middle;
+            border-color: #f1f3f4;
+            font-weight: 500;
+        }
+        
+        .table tbody tr:hover {
+            background-color: rgba(32, 201, 151, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .token-success { 
+            background-color: #d4edda; 
+            color: #155724; 
+            border-left: 4px solid #28a745;
+        }
+        .token-info { 
+            background-color: #d1ecf1; 
+            color: #0c5460; 
+            border-left: 4px solid #17a2b8;
+        }
+        .token-warning { 
+            background-color: #fff3cd; 
+            color: #856404; 
+            border-left: 4px solid #ffc107;
+        }
+        .token-primary { 
+            background-color: #cce7ff; 
+            color: #004085; 
+            border-left: 4px solid #007bff;
+        }
+        
+        .error-message, .success-message {
+            padding: 18px 25px;
+            border-radius: 20px;
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+            gap: 15px;
             font-weight: 500;
         }
 
-        .status-offline {
-            background-color: #ffeaa7;
-            color: #2d3436;
+        .error-message {
+            background: linear-gradient(45deg, #dc3545, #c82333);
+            color: white;
+            box-shadow: 0 8px 25px rgba(220, 53, 69, 0.4);
+        }
+        
+        .success-message {
+            background: linear-gradient(45deg, #28a745, #20c997);
+            color: white;
+            box-shadow: 0 8px 25px rgba(40, 167, 69, 0.4);
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 22px;
+            height: 22px;
+            border: 3px solid #ffffff;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .example-btn {
+            background: linear-gradient(45deg, #6f42c1, #e83e8c);
+            border: none;
+            border-radius: 25px;
+            padding: 12px 25px;
+            color: white;
+            font-weight: 600;
+            margin-top: 15px;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+        
+        .example-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(111, 66, 193, 0.4);
+        }
+        
+        .alert-custom {
+            border: none;
+            border-radius: 15px;
+            padding: 15px 20px;
+            margin: 15px 0;
+            font-weight: 500;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .alert-danger {
+            background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+            color: #721c24;
+            border-left: 5px solid #dc3545;
+        }
+        
+        .alert-success {
+            background: linear-gradient(135deg, #d4edda, #c3e6cb);
+            color: #155724;
+            border-left: 5px solid #28a745;
         }
 
-        .status-online {
-            background-color: #00cec9;
-            color: white;
+        /* Estilos para resultados sintácticos */
+        .syntax-result-item {
+            background: rgba(111, 66, 193, 0.1);
+            border-left: 4px solid #6f42c1;
+            padding: 12px 16px;
+            margin: 8px 0;
+            border-radius: 8px;
+            font-family: 'Fira Code', monospace;
+        }
+
+        .syntax-error-item {
+            background: rgba(220, 53, 69, 0.1);
+            border-left: 4px solid #dc3545;
+            padding: 12px 16px;
+            margin: 8px 0;
+            border-radius: 8px;
+            font-family: 'Fira Code', monospace;
+        }
+
+        .token-badge {
+            background: rgba(111, 66, 193, 0.2);
+            color: #6f42c1;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin: 0 4px;
+        }
+        
+        @media (max-width: 768px) {
+            .title-section h1 {
+                font-size: 2.5rem;
+            }
+            
+            .stats-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .stats-badges {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .table {
+                font-size: 0.85rem;
+            }
         }
     </style>
 </head>
-<body class="bg-white">
+<body>
     <div class="container container-main">
-        <div class="row justify-content-center">
-            <div class="col-lg-12">
-                <div class="text-center mb-4">
-                    <h1 class="display-4 fw-bold">
-                        <i class="fas fa-code text-primary"></i> Analizador Léxico
-                    </h1>
-                    <p class="lead">Escribe tu código y analiza tokens automáticamente</p>
-                    <div id="connectionStatus" class="status-indicator status-offline">
-                        <i class="fas fa-wifi"></i> Verificando servidor...
-                    </div>
-                </div>
+        <!-- Título principal -->
+        <div class="title-section">
+            <h1><i class="fas fa-microchip"></i> ANALIZADOR LÉXICO Y SINTÁCTICO</h1>
+            <p>Análisis Completo de Código con Detección de Tokens y Estructuras</p>
+        </div>
 
-                <!-- Controles de tema -->
-                <div class="text-center mb-4">
-                    <div class="btn-group" role="group">
-                        <button type="button" class="btn btn-primary btn-theme" onclick="cambiarTema('azul')">
-                            <i class="fas fa-palette"></i> Tema Azul
-                        </button>
-                        <button type="button" class="btn btn-light btn-theme" onclick="cambiarTema('blanco')">
-                            <i class="fas fa-sun"></i> Tema Claro
-                        </button>
-                    </div>
-                </div>
+        <!-- Badge de enfoque -->
+        <div class="lexical-focus">
+            <div class="lexical-badge">
+                <i class="fas fa-cogs"></i> Análisis Léxico + Sintáctico
+            </div>
+        </div>
 
-                <!-- Formulario de entrada -->
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0"><i class="fas fa-edit"></i> Ingresa tu código</h5>
+        <!-- Sección de entrada -->
+        <div class="card input-section">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-edit"></i> Ingresa tu código para análisis
+                </h5>
+            </div>
+            <div class="card-body">
+                <form id="analyzerForm">
+                    <div class="mb-3">
+                        <textarea 
+                            class="form-control code-textarea" 
+                            id="codeInput" 
+                            placeholder="Ejemplo: if (x > 5) { int y = x * 2; }"
+                            rows="10"
+                        ></textarea>
                     </div>
-                    <div class="card-body">
-                        <form id="formAnalizar">
-                            <div class="mb-3">
-                                <textarea 
-                                    class="form-control" 
-                                    id="textoAnalizar" 
-                                    rows="6" 
-                                    placeholder="Escribe aquí tu código para analizar..."
-                                    style="font-family: 'Courier New', monospace; font-size: 14px;"
-                                ></textarea>
-                            </div>
-                            <div class="d-grid">
-                                <button type="submit" class="btn btn-success btn-lg">
-                                    <i class="fas fa-search"></i> Analizar Código
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>  
-
-                <!-- Resultados -->
-                <div id="resultados" class="card" style="display: none;">
-                    <div class="card-header">
-                        <div class="header-content">
-                            <h5 class="header-title">
-                                <i class="fas fa-table"></i> 
-                                Resultados del Análisis
-                            </h5>
-                            <div class="stats-badges">
-                                <span class="badge">
-                                    <i class="fas fa-list"></i>
-                                    <span id="totalTokensCount">0</span> Total
-                                </span>
-                                <span class="badge">
-                                    <i class="fas fa-key"></i>
-                                    <span id="palabrasReservadasCount">0</span> Reservadas
-                                </span>
-                                <span class="badge">
-                                    <i class="fas fa-hashtag"></i>
-                                    <span id="numerosCount">0</span> Números
-                                </span>
-                                <span class="badge">
-                                    <i class="fas fa-tag"></i>
-                                    <span id="identificadoresCount">0</span> Variables
-                                </span>
-                                <span class="badge">
-                                    <i class="fas fa-cog"></i>
-                                    <span id="simbolosCount">0</span> Símbolos
-                                </span>
-                            </div>
-                        </div> 
-                    </div>
-                    <div class="card-body p-0">
-                        <div class="table-responsive">
-                            <table class="table table-hover table-bordered mb-0">
-                                <thead>
-                                    <tr>
-                                        <th>Número</th>
-                                        <th>Token</th>
-                                        <th>Tipo</th>
-                                        <th>Estado</th>
-                                        <th>Palabra Reservada</th>
-                                        <th>Símbolo</th>
-                                        <th>Paréntesis Izq</th>
-                                        <th>Paréntesis Der</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="tablaResultados">
-                                    <!-- Los resultados aparecerán aquí -->
-                                </tbody>
-                            </table>
+                    <div class="row">
+                        <div class="col-md-6 mb-2">
+                            <button type="submit" class="btn analyze-btn btn-lexico" id="analyzeBtn">
+                                <i class="fas fa-search"></i> Análisis Léxico
+                            </button>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <button type="button" class="btn analyze-btn btn-sintactico" id="syntaxBtn">
+                                <i class="fas fa-tree"></i> Análisis Sintáctico
+                            </button>
                         </div>
                     </div>
+                    <button type="button" class="btn example-btn" onclick="loadExample()">
+                        <i class="fas fa-lightbulb"></i> Cargar Ejemplo
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Resultados Léxicos -->
+        <div id="lexicalResults" class="card results-section">
+            <div class="card-header">
+                <div class="stats-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-table"></i> Resultados del Análisis Léxico
+                    </h5>
+                    <div class="stats-badges">
+                        <span class="stats-badge">
+                            <i class="fas fa-list"></i>
+                            <span id="totalTokens">0</span> Total
+                        </span>
+                        <span class="stats-badge">
+                            <i class="fas fa-key"></i>
+                            <span id="reservedWords">0</span> Reservadas
+                        </span>
+                        <span class="stats-badge">
+                            <i class="fas fa-hashtag"></i>
+                            <span id="numbers">0</span> Números
+                        </span>
+                        <span class="stats-badge">
+                            <i class="fas fa-tag"></i>
+                            <span id="identifiers">0</span> Variables
+                        </span>
+                        <span class="stats-badge">
+                            <i class="fas fa-cog"></i>
+                            <span id="symbols">0</span> Símbolos
+                        </span>
+                    </div>
                 </div>
+            </div>
+            <div class="card-body p-0">
+                <div id="lexicalErrorsContainer"></div>
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th><i class="fas fa-hashtag"></i> Pos</th>
+                                <th><i class="fas fa-code"></i> Token</th>
+                                <th><i class="fas fa-tag"></i> Tipo</th>
+                                <th><i class="fas fa-info-circle"></i> Estado</th>
+                                <th><i class="fas fa-key"></i> Reservada</th>
+                                <th><i class="fas fa-cog"></i> Símbolo</th>
+                                <th><i class="fas fa-parentheses"></i> (</th>
+                                <th><i class="fas fa-parentheses"></i> )</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lexicalTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Resultados Sintácticos -->
+        <div id="syntaxResults" class="card results-section">
+            <div class="card-header syntax">
+                <div class="stats-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-tree"></i> Resultados del Análisis Sintáctico
+                    </h5>
+                    <div class="stats-badges">
+                        <span class="stats-badge">
+                            <i class="fas fa-check-circle"></i>
+                            <span id="syntaxStructures">0</span> Estructuras
+                        </span>
+                        <span class="stats-badge">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <span id="syntaxErrors">0</span> Errores
+                        </span>
+                        <span class="stats-badge">
+                            <i class="fas fa-code"></i>
+                            <span id="syntaxTokens">0</span> Tokens
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="syntaxErrorsContainer"></div>
+                <div id="syntaxResultsContainer"></div>
+                <div id="syntaxTokensContainer"></div>
             </div>
         </div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
     <script>
-        let serverConnected = false;
+        function clearMessages() {
+            document.querySelectorAll('.error-message, .success-message, .alert-custom').forEach(el => {
+                el.remove();
+            });
+        }
 
-        // Analizador local simple
-        class AnalizadorLexico {
-            constructor() {
-                this.palabrasReservadas = ['if', 'for', 'while'];
-                this.simbolos = {
-                    '(': 'PARENTESIS_IZQ',
-                    ')': 'PARENTESIS_DER',
-                    '{': 'LLAVE_IZQ',
-                    '}': 'LLAVE_DER',
-                    '<': 'MENOR_QUE',
-                    '>': 'MAYOR_QUE',
-                    '=': 'SIMBOLO',
-                    '+': 'SUMA',
-                    '-': 'RESTA',
-                    '*': 'MULTIPLICACION',
-                    '/': 'DIVISION',
-                    ';': 'PUNTO_COMA',
-                    ',': 'COMA'
-                };
-            }
-
-            analizar(texto) {
-                const tokens = [];
-                let i = 0;
-                
-                while (i < texto.length) {
-                    const char = texto[i];
-                    
-                    if (/\s/.test(char)) {
-                        i++;
-                        continue;
-                    }
-                    
-                    if (/\d/.test(char)) {
-                        let numero = '';
-                        while (i < texto.length && /\d/.test(texto[i])) {
-                            numero += texto[i];
-                            i++;
-                        }
-                        tokens.push({
-                            token: numero,
-                            tipo: 'NUMERO',
-                            color: 'primary'
-                        });
-                        continue;
-                    }
-                    
-                    if (/[a-zA-Z_]/.test(char)) {
-                        let palabra = '';
-                        while (i < texto.length && /[a-zA-Z_0-9]/.test(texto[i])) {
-                            palabra += texto[i];
-                            i++;
-                        }
-                        
-                        if (this.palabrasReservadas.includes(palabra)) {
-                            tokens.push({
-                                token: palabra,
-                                tipo: 'PALABRA_RESERVADA',
-                                color: 'success'
-                            });
-                        } else {
-                            tokens.push({
-                                token: palabra,
-                                tipo: 'IDENTIFICADOR',
-                                color: 'info'
-                            });
-                        }
-                        continue;
-                    }
-                    
-                    if (this.simbolos[char]) {
-                        tokens.push({
-                            token: char,
-                            tipo: this.simbolos[char],
-                            color: 'warning'
-                        });
-                        i++;
-                        continue;
-                    }
-                    
-                    tokens.push({
-                        token: char,
-                        tipo: 'DESCONOCIDO',
-                        color: 'danger'
-                    });
-                    i++;
+        function showError(message) {
+            const container = document.querySelector('.container-main');
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.innerHTML = `
+                <i class="fas fa-exclamation-triangle"></i>
+                <span>${message}</span>
+            `;
+            container.insertBefore(errorDiv, container.firstChild);
+            
+            setTimeout(() => {
+                if (errorDiv.parentNode) {
+                    errorDiv.remove();
                 }
-                
-                return tokens;
-            }
+            }, 5000);
         }
 
-        const analizador = new AnalizadorLexico();
-
-        function verificarConexion() {
-            fetch('/test')
-                .then(response => response.json())
-                .then(data => {
-                    serverConnected = true;
-                    document.getElementById('connectionStatus').innerHTML = '<i class="fas fa-check-circle"></i> Servidor conectado';
-                    document.getElementById('connectionStatus').className = 'status-indicator status-online';
-                })
-                .catch(error => {
-                    serverConnected = false;
-                    document.getElementById('connectionStatus').innerHTML = '<i class="fas fa-exclamation-triangle"></i> Modo local';
-                    document.getElementById('connectionStatus').className = 'status-indicator status-offline';
-                });
+        function showSuccess(message) {
+            const container = document.querySelector('.container-main');
+            const successDiv = document.createElement('div');
+            successDiv.className = 'success-message';
+            successDiv.innerHTML = `
+                <i class="fas fa-check-circle"></i>
+                <span>${message}</span>
+            `;
+            container.insertBefore(successDiv, container.firstChild);
+            
+            setTimeout(() => {
+                if (successDiv.parentNode) {
+                    successDiv.remove();
+                }
+            }, 3000);
         }
 
-        function cambiarTema(tema) {
-            const body = document.body;
-            if (tema === 'azul') {
-                body.className = 'bg-blue';
+        function loadExample() {
+            const example = `if (x > 5) {
+    int y = x * 2;
+    float z = 3.14;
+} else {
+    x = x - 1;
+}`;
+            
+            document.getElementById('codeInput').value = example;
+            showSuccess('Ejemplo cargado correctamente');
+        }
+
+        function showLexicalResults(data) {
+            clearMessages();
+            
+            document.getElementById('totalTokens').textContent = data.total_tokens || 0;
+            document.getElementById('reservedWords').textContent = data.palabras_reservadas || 0;
+            document.getElementById('numbers').textContent = data.numeros || 0;
+            document.getElementById('identifiers').textContent = data.identificadores || 0;
+            document.getElementById('symbols').textContent = data.simbolos || 0;
+            
+            const successDiv = document.createElement('div');
+            successDiv.className = 'success-message';
+            successDiv.innerHTML = `
+                <i class="fas fa-check-circle"></i>
+                <span>${data.mensaje || 'Análisis léxico completado exitosamente'}</span>
+            `;
+            document.querySelector('.container-main').insertBefore(successDiv, document.querySelector('.card'));
+            
+            const errorsContainer = document.getElementById('lexicalErrorsContainer');
+            errorsContainer.innerHTML = '';
+            
+            if (data.error) {
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'alert-custom alert-danger';
+                errorDiv.innerHTML = `
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Error:</strong> ${data.error}
+                `;
+                errorsContainer.appendChild(errorDiv);
             } else {
-                body.className = 'bg-white';
+                const successDiv = document.createElement('div');
+                successDiv.className = 'alert-custom alert-success';
+                successDiv.innerHTML = `
+                    <i class="fas fa-check-circle"></i>
+                    <strong>Análisis completado:</strong> Todos los tokens han sido identificados correctamente
+                `;
+                errorsContainer.appendChild(successDiv);
             }
+            
+            const tbody = document.getElementById('lexicalTableBody');
+            tbody.innerHTML = '';
+            
+            if (data.resultados && data.resultados.length > 0) {
+                data.resultados.forEach(token => {
+                    const row = document.createElement('tr');
+                    
+                    let tokenClass = 'token-secondary';
+                    switch (token.tipo) {
+                        case 'PALABRA_RESERVADA':
+                            tokenClass = 'token-success';
+                            break;
+                        case 'NUMERO':
+                            tokenClass = 'token-info';
+                            break;
+                        case 'IDENTIFICADOR':
+                            tokenClass = 'token-primary';
+                            break;
+                        default:
+                            if (token.simbolo === '✓' || token.parentesis_izq === '✓' || token.parentesis_der === '✓') {
+                                tokenClass = 'token-warning';
+                            }
+                            break;
+                    }
+                    
+                    row.classList.add(tokenClass);
+                    
+                    row.innerHTML = `
+                        <td><strong>${token.posicion}</strong></td>
+                        <td><code>${token.token}</code></td>
+                        <td><span class="badge bg-secondary">${token.tipo}</span></td>
+                        <td>
+                            <i class="fas fa-check-circle text-success"></i> ${token.estado || 'Válido'}
+                        </td>
+                        <td>
+                            ${token.palabra_reservada === '✓' ? 
+                                '<i class="fas fa-key text-success"></i> Sí' : 
+                                '<i class="fas fa-times text-muted"></i> No'}
+                        </td>
+                        <td>
+                            ${token.simbolo === '✓' ? 
+                                '<i class="fas fa-cog text-warning"></i> Sí' : 
+                                '<i class="fas fa-times text-muted"></i> No'}
+                        </td>
+                        <td>
+                            ${token.parentesis_izq === '✓' ? 
+                                '<i class="fas fa-check text-info"></i>' : 
+                                '<i class="fas fa-times text-muted"></i>'}
+                        </td>
+                        <td>
+                            ${token.parentesis_der === '✓' ? 
+                                '<i class="fas fa-check text-info"></i>' : 
+                                '<i class="fas fa-times text-muted"></i>'}
+                        </td>
+                    `;
+                    
+                    tbody.appendChild(row);
+                });
+            }
+            
+            document.getElementById('lexicalResults').classList.add('show');
+            
+            setTimeout(() => {
+                document.getElementById('lexicalResults').scrollIntoView({ 
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }, 300);
         }
 
-        document.getElementById('formAnalizar').addEventListener('submit', function(e) {
+        function showSyntaxResults(data) {
+            clearMessages();
+            
+            document.getElementById('syntaxStructures').textContent = data.total_estructuras || 0;
+            document.getElementById('syntaxErrors').textContent = data.total_errores || 0;
+            document.getElementById('syntaxTokens').textContent = data.tokens_lexicos ? data.tokens_lexicos.length : 0;
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = data.success ? 'success-message' : 'error-message';
+            messageDiv.innerHTML = `
+                <i class="fas fa-${data.success ? 'check-circle' : 'exclamation-triangle'}"></i>
+                <span>${data.mensaje}</span>
+            `;
+            document.querySelector('.container-main').insertBefore(messageDiv, document.querySelector('.card'));
+            
+            // Contenedor de errores
+            const errorsContainer = document.getElementById('syntaxErrorsContainer');
+            errorsContainer.innerHTML = '';
+            
+            if (data.errores && data.errores.length > 0) {
+                const errorsTitle = document.createElement('h6');
+                errorsTitle.innerHTML = '<i class="fas fa-exclamation-triangle text-danger"></i> Errores Sintácticos:';
+                errorsContainer.appendChild(errorsTitle);
+                
+                data.errores.forEach(error => {
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'syntax-error-item';
+                    errorDiv.innerHTML = `<i class="fas fa-times-circle"></i> ${error}`;
+                    errorsContainer.appendChild(errorDiv);
+                });
+            }
+            
+            // Contenedor de resultados exitosos
+            const resultsContainer = document.getElementById('syntaxResultsContainer');
+            resultsContainer.innerHTML = '';
+            
+            if (data.resultados_sintacticos && data.resultados_sintacticos.length > 0) {
+                const resultsTitle = document.createElement('h6');
+                resultsTitle.innerHTML = '<i class="fas fa-check-circle text-success"></i> Estructuras Reconocidas:';
+                resultsContainer.appendChild(resultsTitle);
+                
+                data.resultados_sintacticos.forEach(result => {
+                    const resultDiv = document.createElement('div');
+                    resultDiv.className = 'syntax-result-item';
+                    resultDiv.innerHTML = result;
+                    resultsContainer.appendChild(resultDiv);
+                });
+            }
+            
+            // Contenedor de tokens
+            const tokensContainer = document.getElementById('syntaxTokensContainer');
+            tokensContainer.innerHTML = '';
+            
+            if (data.tokens_lexicos && data.tokens_lexicos.length > 0) {
+                const tokensTitle = document.createElement('h6');
+                tokensTitle.innerHTML = '<i class="fas fa-code text-info"></i> Tokens Reconocidos:';
+                tokensContainer.appendChild(tokensTitle);
+                
+                const tokensDiv = document.createElement('div');
+                tokensDiv.style.marginTop = '10px';
+                
+                data.tokens_lexicos.forEach(token => {
+                    const tokenSpan = document.createElement('span');
+                    tokenSpan.className = 'token-badge';
+                    tokenSpan.textContent = token;
+                    tokensDiv.appendChild(tokenSpan);
+                });
+                
+                tokensContainer.appendChild(tokensDiv);
+            }
+            
+            document.getElementById('syntaxResults').classList.add('show');
+            
+            setTimeout(() => {
+                document.getElementById('syntaxResults').scrollIntoView({ 
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }, 300);
+        }
+
+        // Análisis léxico
+        document.getElementById('analyzerForm').addEventListener('submit', function(e) {
             e.preventDefault();
             
-            const texto = document.getElementById('textoAnalizar').value.trim();
-            if (!texto) {
-                alert('Por favor, ingresa código para analizar.');
+            const code = document.getElementById('codeInput').value.trim();
+            if (!code) {
+                showError('Por favor, ingresa código para analizar.');
                 return;
             }
-
-            const btnAnalizar = document.querySelector('button[type="submit"]');
-            btnAnalizar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analizando...';
-            btnAnalizar.disabled = true;
-
-            // Usar servidor Flask si está disponible, sino usar analizador local
-            fetch('/analizar', {
+            
+            const analyzeBtn = document.getElementById('analyzeBtn');
+            const originalText = analyzeBtn.innerHTML;
+            
+            analyzeBtn.innerHTML = '<span class="loading-spinner"></span> Analizando...';
+            analyzeBtn.disabled = true;
+            
+            clearMessages();
+            document.getElementById('lexicalResults').classList.remove('show');
+            
+            fetch('/analizar_lexico', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ texto: texto })
+                body: JSON.stringify({ texto: code })
             })
             .then(response => response.json())
             .then(data => {
-                if (data.success) {
-                    mostrarResultados(data);
+                if (data.success || data.resultados) {
+                    showLexicalResults(data);
                 } else {
-                    throw new Error('Error del servidor');
+                    showError(data.error || 'Error en el análisis léxico');
                 }
             })
             .catch(error => {
-                console.log('Usando analizador local');
-                const tokens = analizador.analizar(texto);
-                const dataLocal = convertirTokens(tokens);
-                mostrarResultados(dataLocal);
+                showError('Error de conexión: ' + error.message);
             })
             .finally(() => {
-                btnAnalizar.innerHTML = '<i class="fas fa-search"></i> Analizar Código';
-                btnAnalizar.disabled = false;
+                analyzeBtn.innerHTML = originalText;
+                analyzeBtn.disabled = false;
             });
         });
 
-        function convertirTokens(tokens) {
-            const stats = {
-                total: tokens.length,
-                palabrasReservadas: 0,
-                identificadores: 0,
-                numeros: 0,
-                simbolos: 0
-            };
-
-            const resultados = tokens.map((token, i) => {
-                const resultado = {
-                    ...token,
-                    posicion: i + 1,
-                    palabra_reservada: '',
-                    simbolo: '',
-                    parentesis_izq: '',
-                    parentesis_der: '',
-                    estado: ''
-                };
-
-                if (token.tipo === 'PALABRA_RESERVADA') {
-                    resultado.palabra_reservada = '✓';
-                    resultado.estado = 'Palabra Clave';
-                    stats.palabrasReservadas++;
-                } else if (token.tipo === 'IDENTIFICADOR') {
-                    resultado.estado = 'Variable';
-                    stats.identificadores++;
-                } else if (token.tipo === 'NUMERO') {
-                    resultado.estado = 'Número';
-                    stats.numeros++;
-                } else if (token.tipo === 'PARENTESIS_IZQ') {
-                    resultado.simbolo = '✓';
-                    resultado.parentesis_izq = '✓';
-                    resultado.estado = 'Paréntesis';
-                    stats.simbolos++;
-                } else if (token.tipo === 'PARENTESIS_DER') {
-                    resultado.simbolo = '✓';
-                    resultado.parentesis_der = '✓';
-                    resultado.estado = 'Paréntesis';
-                    stats.simbolos++;
-                } else {
-                    resultado.simbolo = '✓';
-                    resultado.estado = 'Símbolo';
-                    stats.simbolos++;
-                }
-
-                return resultado;
-            });
-
-            return {
-                resultados: resultados,
-                total_tokens: stats.total,
-                palabras_reservadas: stats.palabrasReservadas,
-                identificadores: stats.identificadores,
-                numeros: stats.numeros,
-                simbolos: stats.simbolos
-            };
-        }
-
-        function mostrarResultados(data) {
-            const resultadosDiv = document.getElementById('resultados');
-            const tablaBody = document.getElementById('tablaResultados');
-
-            // Actualizar contadores
-            document.getElementById('totalTokensCount').textContent = data.total_tokens || 0;
-            document.getElementById('palabrasReservadasCount').textContent = data.palabras_reservadas || 0;
-            document.getElementById('identificadoresCount').textContent = data.identificadores || 0;
-            document.getElementById('numerosCount').textContent = data.numeros || 0;
-            document.getElementById('simbolosCount').textContent = data.simbolos || 0;
-
-            // Limpiar tabla
-            tablaBody.innerHTML = '';
-
-            if (data.resultados && data.resultados.length > 0) {
-                data.resultados.forEach((resultado, index) => {
-                    const fila = document.createElement('tr');
-                    fila.className = `token-${resultado.color} fade-in`;
-                    
-                    let icono = '<i class="fas fa-cog text-secondary"></i>';
-                    if (resultado.tipo === 'PALABRA_RESERVADA') {
-                        icono = '<i class="fas fa-check-circle text-success"></i>';
-                    } else if (resultado.tipo === 'NUMERO') {
-                        icono = '<i class="fas fa-hashtag text-primary"></i>';
-                    } else if (resultado.tipo === 'IDENTIFICADOR') {
-                        icono = '<i class="fas fa-user-tag text-info"></i>';
-                    } else if (resultado.tipo.includes('PARENTESIS')) {
-                        icono = '<i class="fas fa-brackets-curly text-warning"></i>';
-                    } else {
-                        icono = '<i class="fas fa-cog text-warning"></i>';
-                    }
-                    
-                    fila.innerHTML = `
-                        <td><strong>${resultado.posicion || index + 1}</strong></td>
-                        <td><code>${resultado.token}</code></td>
-                        <td><span class="badge bg-${resultado.color}">${resultado.tipo}</span></td>
-                        <td>${icono}</td>
-                        <td><span class="check-mark check-success">${resultado.palabra_reservada || ''}</span></td>
-                        <td><span class="check-mark check-warning">${resultado.simbolo || ''}</span></td>
-                        <td><span class="check-mark check-primary">${resultado.parentesis_izq || ''}</span></td>
-                        <td><span class="check-mark check-danger">${resultado.parentesis_der || ''}</span></td>
-                    `;
-                    
-                    tablaBody.appendChild(fila);
-                });
-
-                resultadosDiv.style.display = 'block';
-            } else {
-                tablaBody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4">No se encontraron tokens</td></tr>';
-                resultadosDiv.style.display = 'block';
+        // Análisis sintáctico
+        document.getElementById('syntaxBtn').addEventListener('click', function() {
+            const code = document.getElementById('codeInput').value.trim();
+            if (!code) {
+                showError('Por favor, ingresa código para analizar.');
+                return;
             }
-        }
+            
+            const syntaxBtn = document.getElementById('syntaxBtn');
+            const originalText = syntaxBtn.innerHTML;
+            
+            syntaxBtn.innerHTML = '<span class="loading-spinner"></span> Analizando...';
+            syntaxBtn.disabled = true;
+            
+            clearMessages();
+            document.getElementById('syntaxResults').classList.remove('show');
+            
+            fetch('/analizar_sintactico', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ texto: code })
+            })
+            .then(response => response.json())
+            .then(data => {
+                showSyntaxResults(data);
+            })
+            .catch(error => {
+                showError('Error de conexión: ' + error.message);
+            })
+            .finally(() => {
+                syntaxBtn.innerHTML = originalText;
+                syntaxBtn.disabled = false;
+            });
+        });
 
-        // Solo verificar conexión al cargar
-        window.addEventListener('load', verificarConexion);
+        // Cargar ejemplo al iniciar
+        document.addEventListener('DOMContentLoaded', function() {
+            if (!document.getElementById('codeInput').value.trim()) {
+                loadExample();
+            }
+        });
     </script>
-    <x></x>
 </body>
 </html>

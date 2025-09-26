@@ -1,15 +1,18 @@
 from flask import Flask, render_template, request, jsonify
 import re
+from analizadorsintactico import analizarsintactico   # 👈 Importamos el parser
 
 app = Flask(__name__)
 
+# =======================
+#   ANALIZADOR LÉXICO
+# =======================
 class AnalizadorLexico:
     def __init__(self):
-        # Palabras reservadas (en minúsculas para comparación)
-        self.palabras_reservadas = {'if', 'for', 'while'}
+        # Palabras reservadas
+        self.palabras_reservadas = {'if', 'else', 'for', 'while', 'int', 'float', 'return', 'void'}
 
-        # Tokens definidos con expresiones regulares
-        # IMPORTANTE: El orden importa - tokens más largos primero
+        # Tokens con expresiones regulares
         self.tokens = {
             'INCREMENT': r'\+\+',
             'DECREMENT': r'--',
@@ -19,7 +22,7 @@ class AnalizadorLexico:
             'NOTEQUAL': r'!=',
             'LOGICALAND': r'&&',
             'LOGICALOR': r'\|\|',
-            'ASSIGN': r'=',           # ← AQUÍ ESTÁ EL SÍMBOLO = que pediste
+            'ASSIGN': r'=',
             'LPAREN': r'\(',
             'RPAREN': r'\)',
             'LBRACE': r'\{',
@@ -39,7 +42,7 @@ class AnalizadorLexico:
             'NOT': r'!',
             'QUESTION': r'\?',
             'COLON': r':',
-            'NUMBER': r'\d+(\.\d+)?',  # Soporte para decimales
+            'NUMBER': r'\d+(\.\d+)?',
             'IDENTIFIER': r'[a-zA-Z_][a-zA-Z0-9_]*'
         }
 
@@ -47,24 +50,18 @@ class AnalizadorLexico:
         if not texto.strip():
             return [], 0, 0, 0, 0
 
-        # Crear regex maestro con todos los tokens
         token_regex = '|'.join(f'(?P<{nombre}>{patron})' for nombre, patron in self.tokens.items())
-
         resultados = []
         posicion = 1
-
-        # Contadores para estadísticas
         contador_palabras_reservadas = 0
         contador_identificadores = 0
         contador_numeros = 0
         contador_simbolos = 0
 
-        # Buscar coincidencias
         for match in re.finditer(token_regex, texto):
             tipo = match.lastgroup
             valor = match.group()
 
-            # Crear estructura base del resultado
             resultado = {
                 'token': valor,
                 'posicion': posicion,
@@ -74,7 +71,6 @@ class AnalizadorLexico:
                 'parentesis_der': ''
             }
 
-            # Verificar si es palabra reservada (comparación case-insensitive)
             if tipo == 'IDENTIFIER' and valor.lower() in self.palabras_reservadas:
                 resultado.update({
                     'tipo': 'PALABRA_RESERVADA',
@@ -116,7 +112,6 @@ class AnalizadorLexico:
                 })
                 contador_simbolos += 1
             else:
-                # Otros símbolos
                 tipo_traducido = self._traducir_tipo(tipo)
                 resultado.update({
                     'tipo': tipo_traducido,
@@ -132,11 +127,10 @@ class AnalizadorLexico:
         return resultados, contador_palabras_reservadas, contador_identificadores, contador_numeros, contador_simbolos
 
     def _traducir_tipo(self, tipo):
-        """Traduce los tipos de tokens al español"""
         traducciones = {
             'INCREMENT': 'INCREMENTO',
             'DECREMENT': 'DECREMENTO', 
-            'ASSIGN': 'ASIGNACION',        # ← Aquí se traduce el símbolo =
+            'ASSIGN': 'ASIGNACION',
             'EQUALITY': 'IGUALDAD',
             'NOTEQUAL': 'DIFERENTE',
             'LPAREN': 'PARENTESIS_IZQ',
@@ -165,37 +159,20 @@ class AnalizadorLexico:
         }
         return traducciones.get(tipo, tipo)
 
-    def _obtener_descripcion(self, tipo, valor):
-        """Obtiene una descripción amigable para cada tipo de token"""
-        descripciones = {
-            'ASIGNACION': f'Operador de asignación ({valor})',  # ← Descripción para =
-            'IGUALDAD': 'Operador de comparación',
-            'INCREMENTO': 'Operador de incremento',
-            'DECREMENTO': 'Operador de decremento',
-            'SUMA': 'Operador aritmético',
-            'RESTA': 'Operador aritmético',
-            'MULTIPLICACION': 'Operador aritmético',
-            'DIVISION': 'Operador aritmético',
-            'MENOR_QUE': 'Operador de comparación',
-            'MAYOR_QUE': 'Operador de comparación',
-            'PARENTESIS_IZQ': 'Delimitador de expresión',
-            'PARENTESIS_DER': 'Delimitador de expresión',
-            'LLAVE_IZQ': 'Delimitador de bloque',
-            'LLAVE_DER': 'Delimitador de bloque',
-            'PUNTO_COMA': 'Terminador de sentencia'
-        }
-        return descripciones.get(tipo, f'Símbolo: {valor}')
 
+# Instancia del analizador léxico
+analizador_lexico = AnalizadorLexico()
 
-# Instancia del analizador
-analizador = AnalizadorLexico()
-
+# =======================
+#   RUTAS FLASK
+# =======================
 @app.route('/')
 def index():
     return render_template('index.html')
 
-@app.route('/analizar', methods=['POST'])
-def analizar_texto():
+# --- Endpoint Análisis Léxico ---
+@app.route('/analizar_lexico', methods=['POST'])
+def analizar_lexico():
     try:
         data = request.get_json()
         texto = data.get('texto', '')
@@ -206,7 +183,7 @@ def analizar_texto():
                 'error': 'No se proporcionó texto para analizar'
             })
         
-        resultados, palabras_reservadas, identificadores, numeros, simbolos = analizador.analizar(texto)
+        resultados, palabras_reservadas, identificadores, numeros, simbolos = analizador_lexico.analizar(texto)
         
         return jsonify({
             'success': True,
@@ -225,39 +202,107 @@ def analizar_texto():
             'error': f'Error al analizar: {str(e)}'
         })
 
+# --- Endpoint Análisis Sintáctico ---
+@app.route('/analizar_sintactico', methods=['POST'])
+def analizar_sintactico_endpoint():
+    try:
+        data = request.get_json()
+        texto = data.get('texto', '')
+
+        if not texto.strip():
+            return jsonify({
+                'success': False,
+                'error': 'No se proporcionó texto para analizar',
+                'errores': ['Texto vacío'],
+                'resultados_sintacticos': [],
+                'tokens_lexicos': [],
+                'total_estructuras': 0,
+                'total_errores': 1
+            })
+
+        # Llamar al analizador sintáctico
+        resultado = analizarsintactico(texto)
+        
+        # El resultado ya viene en el formato correcto
+        return jsonify(resultado)
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Error en el análisis sintáctico: {str(e)}',
+            'errores': [f'Error interno: {str(e)}'],
+            'resultados_sintacticos': [],
+            'tokens_lexicos': [],
+            'total_estructuras': 0,
+            'total_errores': 1
+        })
+
+# --- Endpoint Test ---
 @app.route('/test')
 def test():
-    """Endpoint de prueba para verificar que el servidor funciona"""
     return jsonify({
         'status': 'OK',
-        'message': 'El analizador léxico está funcionando correctamente',
-        'tokens_soportados': list(analizador.tokens.keys()),
-        'palabras_reservadas': list(analizador.palabras_reservadas)
+        'message': 'Analizador léxico y sintáctico funcionando',
+        'tokens_soportados': list(analizador_lexico.tokens.keys()),
+        'palabras_reservadas': list(analizador_lexico.palabras_reservadas),
+        'estructuras_sintacticas': [
+            'Declaraciones de variables: int x = 5;',
+            'Asignaciones: x = 10;',
+            'Estructuras FOR: for(i=0; i<10; i++) { }',
+            'Expresiones aritméticas: x + y * 2',
+            'Expresiones de comparación: x > 5'
+        ]
     })
 
-@app.errorhandler(404)
-def not_found(error):
-    return jsonify({'error': 'Endpoint no encontrado'}), 404
+# --- Endpoint para ejemplos ---
+@app.route('/ejemplos')
+def ejemplos():
+    return jsonify({
+        'ejemplos': [
+            {
+                'nombre': 'Declaración simple',
+                'codigo': 'int x = 5;',
+                'descripcion': 'Declaración de variable entera con inicialización'
+            },
+            {
+                'nombre': 'Estructura FOR completa',
+                'codigo': 'for(i=0; i<10; i++) {\n    int y = i * 2;\n}',
+                'descripcion': 'Bucle for con inicialización, condición, incremento y bloque'
+            },
+            {
+                'nombre': 'Múltiples declaraciones',
+                'codigo': 'int x = 5;\nfloat y = 3.14;\nint z = x + 2;',
+                'descripcion': 'Varias declaraciones de variables'
+            },
+            {
+                'nombre': 'Asignación simple',
+                'codigo': 'x = 10;',
+                'descripcion': 'Asignación de valor a variable existente'
+            },
+            {
+                'nombre': 'Error sintáctico',
+                'codigo': 'int = 5;',
+                'descripcion': 'Declaración incompleta (falta identificador)'
+            }
+        ]
+    })
 
-@app.errorhandler(500)
-def internal_error(error):
-    return jsonify({'error': 'Error interno del servidor'}), 500
-
-
+# =======================
+#   MAIN
+# =======================
 if __name__ == '__main__':
-    print("🚀 Iniciando el Analizador Léxico...")
+    print("🚀 Iniciando Analizador Léxico y Sintáctico...")
     print("📍 Disponible en: http://localhost:5000")
-    print("🧪 Endpoint de prueba: http://localhost:5000/test")
-    print("📝 Tokens soportados:")
-    
-    analizador_test = AnalizadorLexico()
-    for token in analizador_test.tokens.keys():
-        print(f"   - {token}")
-    
-    print(f"🔤 Palabras reservadas: {', '.join(analizador_test.palabras_reservadas)}")
-    print("=" * 50)
+    print("🧪 Endpoint de prueba: GET -> http://localhost:5000/test")
+    print("🧪 Endpoint léxico: POST -> http://localhost:5000/analizar_lexico")
+    print("🧪 Endpoint sintáctico: POST -> http://localhost:5000/analizar_sintactico")
+    print("📚 Ejemplos disponibles: GET -> http://localhost:5000/ejemplos")
+    print("=" * 60)
+    print("📋 Estructuras sintácticas soportadas:")
+    print("   • Declaraciones: int x = 5;")
+    print("   • Asignaciones: x = 10;")
+    print("   • Bucles FOR: for(i=0; i<10; i++) { ... }")
+    print("   • Expresiones aritméticas y lógicas")
+    print("=" * 60)
     
     app.run(debug=True, host='0.0.0.0', port=5000)
-
-
-    
