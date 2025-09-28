@@ -204,56 +204,161 @@
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
         
-        .table {
+        /* Estilos mejorados para la tabla */
+        .table-modern {
             border-radius: 20px;
             overflow: hidden;
             box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            background: white;
+            margin: 0;
         }
         
-        .table thead th {
-            background: linear-gradient(45deg, #495057, #6c757d);
+        .table-modern thead {
+            background: linear-gradient(135deg, #495057, #6c757d);
+        }
+        
+        .table-modern thead th {
             color: white;
             border: none;
-            padding: 18px 12px;
+            padding: 18px 15px;
             font-weight: 700;
             text-align: center;
             font-size: 0.9rem;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+            position: relative;
+            vertical-align: middle;
         }
         
-        .table tbody td {
-            padding: 15px 12px;
+        .table-modern tbody td {
+            padding: 15px;
             text-align: center;
             vertical-align: middle;
-            border-color: #f1f3f4;
+            border: none;
+            border-bottom: 1px solid #f1f3f4;
             font-weight: 500;
+            font-size: 0.95rem;
         }
         
-        .table tbody tr:hover {
-            background-color: rgba(32, 201, 151, 0.1);
+        .table-modern tbody tr {
             transition: all 0.3s ease;
+            position: relative;
         }
         
+        .table-modern tbody tr:hover {
+            background: linear-gradient(135deg, rgba(32, 201, 151, 0.1), rgba(40, 167, 69, 0.05));
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .table-modern tbody tr:last-child td {
+            border-bottom: none;
+        }
+        
+        /* Nuevos estilos para los tokens */
+        .token-cell {
+            font-family: 'Fira Code', 'Consolas', monospace;
+            font-weight: 600;
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-radius: 8px;
+            padding: 8px 12px;
+            display: inline-block;
+            min-width: 60px;
+            color: #495057;
+            border-left: 3px solid #20c997;
+        }
+        
+        .tipo-badge {
+            background: linear-gradient(135deg, #6c757d, #495057);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: inline-block;
+            min-width: 100px;
+        }
+        
+        .tipo-badge.palabra-reservada {
+            background: linear-gradient(135deg, #28a745, #20c997);
+        }
+        
+        .tipo-badge.identificador {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+        }
+        
+        .tipo-badge.numero {
+            background: linear-gradient(135deg, #17a2b8, #138496);
+        }
+        
+        .tipo-badge.simbolo {
+            background: linear-gradient(135deg, #ffc107, #e0a800);
+            color: #212529;
+        }
+        
+        .estado-badge {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .check-icon {
+            color: #28a745;
+            font-size: 1.1rem;
+        }
+        
+        .times-icon {
+            color: #6c757d;
+            font-size: 1.1rem;
+        }
+        
+        .symbol-icon {
+            color: #ffc107;
+            font-size: 1.1rem;
+        }
+        
+        .info-icon {
+            color: #17a2b8;
+            font-size: 1.1rem;
+        }
+        
+        /* Estilos para las celdas de Sí/No */
+        .yes-cell {
+            color: #28a745;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .no-cell {
+            color: #6c757d;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        /* Filas con colores de fondo mejorados */
         .token-success { 
-            background-color: #d4edda; 
-            color: #155724; 
-            border-left: 4px solid #28a745;
+            background: linear-gradient(135deg, rgba(212, 237, 218, 0.3), rgba(195, 230, 203, 0.2));
         }
         .token-info { 
-            background-color: #d1ecf1; 
-            color: #0c5460; 
-            border-left: 4px solid #17a2b8;
+            background: linear-gradient(135deg, rgba(209, 236, 241, 0.3), rgba(179, 229, 252, 0.2));
         }
         .token-warning { 
-            background-color: #fff3cd; 
-            color: #856404; 
-            border-left: 4px solid #ffc107;
+            background: linear-gradient(135deg, rgba(255, 243, 205, 0.3), rgba(254, 230, 138, 0.2));
         }
         .token-primary { 
-            background-color: #cce7ff; 
-            color: #004085; 
-            border-left: 4px solid #007bff;
+            background: linear-gradient(135deg, rgba(204, 231, 255, 0.3), rgba(158, 216, 255, 0.2));
         }
         
         .error-message, .success-message {
@@ -374,8 +479,13 @@
                 justify-content: center;
             }
             
-            .table {
+            .table-modern {
                 font-size: 0.85rem;
+            }
+            
+            .table-modern thead th,
+            .table-modern tbody td {
+                padding: 10px 8px;
             }
         }
     </style>
@@ -465,15 +575,15 @@
             <div class="card-body p-0">
                 <div id="lexicalErrorsContainer"></div>
                 <div class="table-responsive">
-                    <table class="table table-hover mb-0">
+                    <table class="table table-modern mb-0">
                         <thead>
                             <tr>
-                                <th><i class="fas fa-hashtag"></i> Pos</th>
-                                <th><i class="fas fa-code"></i> Token</th>
-                                <th><i class="fas fa-tag"></i> Tipo</th>
-                                <th><i class="fas fa-info-circle"></i> Estado</th>
-                                <th><i class="fas fa-key"></i> Reservada</th>
-                                <th><i class="fas fa-cog"></i> Símbolo</th>
+                                <th><i class="fas fa-hashtag"></i> POS</th>
+                                <th><i class="fas fa-code"></i> TOKEN</th>
+                                <th><i class="fas fa-tag"></i> TIPO</th>
+                                <th><i class="fas fa-info-circle"></i> ESTADO</th>
+                                <th><i class="fas fa-key"></i> RESERVADA</th>
+                                <th><i class="fas fa-cog"></i> SÍMBOLO</th>
                                 <th><i class="fas fa-parentheses"></i> (</th>
                                 <th><i class="fas fa-parentheses"></i> )</th>
                             </tr>
@@ -549,7 +659,7 @@
                 <i class="fas fa-check-circle"></i>
                 <span>${message}</span>
             `;
-            container.insertBefore(successDiv, container.firstChild);
+            container.insertBefore(successDiv, container.querySelector('.card'));
             
             setTimeout(() => {
                 if (successDiv.parentNode) {
@@ -568,6 +678,19 @@
             
             document.getElementById('codeInput').value = example;
             showSuccess('Ejemplo cargado correctamente');
+        }
+
+        function getTipoClass(tipo) {
+            switch (tipo) {
+                case 'PALABRA_RESERVADA':
+                    return 'palabra-reservada';
+                case 'IDENTIFICADOR':
+                    return 'identificador';
+                case 'NUMERO':
+                    return 'numero';
+                default:
+                    return 'simbolo';
+            }
         }
 
         function showLexicalResults(data) {
@@ -637,30 +760,32 @@
                     
                     row.innerHTML = `
                         <td><strong>${token.posicion}</strong></td>
-                        <td><code>${token.token}</code></td>
-                        <td><span class="badge bg-secondary">${token.tipo}</span></td>
+                        <td><div class="token-cell">${token.token}</div></td>
+                        <td><span class="tipo-badge ${getTipoClass(token.tipo)}">${token.tipo}</span></td>
                         <td>
-                            <i class="fas fa-check-circle text-success"></i> ${token.estado || 'Válido'}
+                            <div class="estado-badge">
+                                <i class="fas fa-check-circle"></i> ${token.estado || 'Válido'}
+                            </div>
                         </td>
                         <td>
                             ${token.palabra_reservada === '✓' ? 
-                                '<i class="fas fa-key text-success"></i> Sí' : 
-                                '<i class="fas fa-times text-muted"></i> No'}
+                                '<div class="yes-cell"><i class="fas fa-key check-icon"></i> Sí</div>' : 
+                                '<div class="no-cell"><i class="fas fa-times times-icon"></i> No</div>'}
                         </td>
                         <td>
                             ${token.simbolo === '✓' ? 
-                                '<i class="fas fa-cog text-warning"></i> Sí' : 
-                                '<i class="fas fa-times text-muted"></i> No'}
+                                '<div class="yes-cell"><i class="fas fa-cog symbol-icon"></i> Sí</div>' : 
+                                '<div class="no-cell"><i class="fas fa-times times-icon"></i> No</div>'}
                         </td>
                         <td>
                             ${token.parentesis_izq === '✓' ? 
-                                '<i class="fas fa-check text-info"></i>' : 
-                                '<i class="fas fa-times text-muted"></i>'}
+                                '<i class="fas fa-check info-icon"></i>' : 
+                                '<i class="fas fa-times times-icon"></i>'}
                         </td>
                         <td>
                             ${token.parentesis_der === '✓' ? 
-                                '<i class="fas fa-check text-info"></i>' : 
-                                '<i class="fas fa-times text-muted"></i>'}
+                                '<i class="fas fa-check info-icon"></i>' : 
+                                '<i class="fas fa-times times-icon"></i>'}
                         </td>
                     `;
                     
